@@ -107,13 +107,113 @@ namespace BlogCore.Areas.Admin.Controllers
 
 
 
+        // Editar articulo y imagen
+
+        public IActionResult Edit(ArticuloVM artiVM)
+        {
+            if (ModelState.IsValid)
+            {
+                string rutaPrincipal = _hostingEnvironment.WebRootPath;
+                var archivos = HttpContext.Request.Form.Files;
+
+
+                var articulosDesdeDb = _contenedorTrabajo.Articulo.Get(artiVM.Articulo.Id);
+
+
+
+                if (archivos.Count() > 0)
+                {
+                    // Nuevo imagen para el articulo
+                    string nombreArchivo = Guid.NewGuid().ToString();
+                    var subidas = Path.Combine(rutaPrincipal, @"imagenes\articulos");
+                    var extension = Path.GetExtension(archivos[0].FileName);
+                    var nuevaExtension = Path.GetExtension(archivos[0].FileName);
+
+
+                    var rutaImagen = Path.Combine(rutaPrincipal, articulosDesdeDb.UrlImagen.TrimStart('\\'));
+                    if (System.IO.File.Exists(rutaImagen))
+                    {
+                        System.IO.File.Delete(rutaImagen);
+                    }
+
+                    // Otra vez se sube la imagen
+
+                    using (var fileStreams = new FileStream(Path.Combine(subidas, nombreArchivo + extension), FileMode.Create))
+                    {
+                        archivos[0].CopyTo(fileStreams);
+                    }
+
+                    artiVM.Articulo.UrlImagen = @"\imagenes\articulos\" + nombreArchivo + extension;
+                    artiVM.Articulo.FechaCreacion = DateTime.Now.ToString();
+
+                    _contenedorTrabajo.Articulo.Update(artiVM.Articulo);
+                    _contenedorTrabajo.Save();
+
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    // Aqui cuando la imagen ya existe y se conserva
+                    artiVM.Articulo.UrlImagen = articulosDesdeDb.UrlImagen;
+                }
+
+                _contenedorTrabajo.Articulo.Update(artiVM.Articulo);
+                _contenedorTrabajo.Save();
+                return RedirectToAction(nameof(Index));
+
+            }
+
+            return View(artiVM);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #region
         [HttpGet]
         public IActionResult GetAll()
         {
             // Opcion 1
-            return Json(new { data = _contenedorTrabajo.Articulo.GetAll() });
+            return Json(new { data = _contenedorTrabajo.Articulo.GetAll(includeProperties: "Categoria") });
         }
+
+
+        [HttpDelete]
+        public IActionResult Delete(int id)
+        {
+
+            var articuloDesdeDb = _contenedorTrabajo.Articulo.Get(id);
+            string rutaDirectorioPrincipal = _hostingEnvironment.WebRootPath;
+            var rutaImagen = Path.Combine(rutaDirectorioPrincipal, articuloDesdeDb.UrlImagen.TrimStart('\\'));
+
+            if (System.IO.File.Exists(rutaImagen))
+            {
+                System.IO.File.Delete(rutaImagen);
+            }
+
+            if (articuloDesdeDb == null)
+            {
+                return Json(new { success = false, message = "Error borrando articulo" });
+
+            }
+           
+            _contenedorTrabajo.Articulo.Remove(articuloDesdeDb);
+            _contenedorTrabajo.Save();
+            return Json(new { success = true, message = "Articulo borrado correctamente" });
+        }
+
+
 
         #endregion
 
