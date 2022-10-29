@@ -32,7 +32,7 @@ namespace BlogCore.Models
 
 
         //Enlazar articulos (muchos a uno) con categorias
-        [Required]
+        [Required(ErrorMessage ="Selecione una categoria")]
         public int CategoriaId { get; set; }
 
         [ForeignKey("CategoriaId")]
