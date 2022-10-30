@@ -21,7 +21,7 @@ namespace BlogCore.Areas.Admin.Controllers
 
 
         // Metodo Index
-
+        [HttpGet]
         public IActionResult Index()
         {
             return View();
@@ -32,6 +32,7 @@ namespace BlogCore.Areas.Admin.Controllers
 
         // Metodo Crear
 
+        [HttpGet]
         public IActionResult Create()
         {
             ArticuloVM artivm = new ArticuloVM()
@@ -108,7 +109,8 @@ namespace BlogCore.Areas.Admin.Controllers
 
 
         // Editar articulo y imagen
-
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Edit(ArticuloVM artiVM)
         {
             if (ModelState.IsValid)
